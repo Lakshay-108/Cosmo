@@ -34,8 +34,7 @@ speaker.speak("How can I assist you?")
 while True:
     print("Listening...")
     query = take_command()
-
-    # todo: Add more websites
+    
     #Some websites are added including YouTube, Google, Github etc.
     sites = [
         ["youtube", "https://www.youtube.com/"],
@@ -52,7 +51,6 @@ while True:
             speaker.speak(f"Opening {site[0]}..")
             webbrowser.open(site[1])
 
-    # todo: Add more apps from paths for apps
     # Opens Spotify
     if "Open Spotify".lower() in query.lower():
         speaker.speak("Opening Spotify...")
