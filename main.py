@@ -56,9 +56,6 @@ while True:
         speaker.speak("Opening Spotify...")
         os.startfile("Spotify.exe")
 
-    if "Open Telegram".lower() in query.lower():
-        speaker.speak("Opening Telegram...")
-        os.startfile()
     # Shows current time
     if "the time".lower() in query.lower():
         time = datetime.datetime.now().strftime("%H:%M:%S")
