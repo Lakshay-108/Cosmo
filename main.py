@@ -1,11 +1,11 @@
 import speech_recognition as sr
 import os
 import webbrowser
-import win32com.client
 import datetime
 
 # Fallback voice initialization for TTS
 try:
+    import win32com.client
     speaker = win32com.client.Dispatch("SAPI.SpVoice")
     def speak(text: str):
         speaker.speak(text)
@@ -17,24 +17,32 @@ except Exception:
         engine.runAndWait()
 
 def take_command():
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        r.pause_threshold = 1
-        print("Listening...")
+    try:
+        r = sr.Recognizer()
+        with sr.Microphone() as source:
+            r.pause_threshold = 1
+            print("Listening...")
+            try:
+                audio = r.listen(source)
+                query = r.recognize_google(audio, language="en-in")
+                print(f"User said: {query}\n")
+                return query
+            except sr.UnknownValueError:
+                print("Could not understand audio.")
+                return ""
+            except sr.RequestError as e:
+                print(f"Speech Recognition service error: {e}")
+                return ""
+            except Exception as e:
+                print(f"Error listening: {e}")
+                return ""
+    except (AttributeError, OSError, Exception) as e:
+        print(f"\n[Microphone/PyAudio not available ({e}) - falling back to text input]")
         try:
-            audio = r.listen(source)
-            query = r.recognize_google(audio, language="en-in")
-            print(f"User said: {query}\n")
+            query = input("Enter command: ")
             return query
-        except sr.UnknownValueError:
-            print("Could not understand audio.")
-            return ""
-        except sr.RequestError as e:
-            print(f"Speech Recognition service error: {e}")
-            return ""
-        except Exception as e:
-            print(f"Error listening: {e}")
-            return ""
+        except (KeyboardInterrupt, EOFError):
+            return "exit"
 
 def greet_user():
     current_hour = datetime.datetime.now().hour
