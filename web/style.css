@@ -421,7 +421,26 @@ body {
     box-shadow: 0 0 25px var(--cyan-glow);
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar { width: 5px; }
+/* Scrollbar styling for system comm log & globally */
+.console-output::-webkit-scrollbar {
+    width: 6px;
+}
+
+.console-output::-webkit-scrollbar-track {
+    background: rgba(3, 8, 20, 0.9);
+    border-radius: 3px;
+}
+
+.console-output::-webkit-scrollbar-thumb {
+    background: var(--cyan-glow);
+    border-radius: 3px;
+    box-shadow: 0 0 10px var(--cyan-glow);
+}
+
+.console-output::-webkit-scrollbar-thumb:hover {
+    background: #ffffff;
+}
+
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-dark); }
 ::-webkit-scrollbar-thumb { background: var(--cyan-dim); border-radius: 3px; }
