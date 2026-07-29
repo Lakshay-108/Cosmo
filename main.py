@@ -4,38 +4,51 @@ import webbrowser
 import win32com.client
 import datetime
 
-speaker = win32com.client.Dispatch("SAPI.SpVoice")
+# Fallback voice initialization for TTS
+try:
+    speaker = win32com.client.Dispatch("SAPI.SpVoice")
+    def speak(text: str):
+        speaker.speak(text)
+except Exception:
+    import pyttsx3
+    engine = pyttsx3.init()
+    def speak(text: str):
+        engine.say(text)
+        engine.runAndWait()
 
 def take_command():
     r = sr.Recognizer()
     with sr.Microphone() as source:
         r.pause_threshold = 1
-        audio = r.listen(source)
+        print("Listening...")
         try:
+            audio = r.listen(source)
             query = r.recognize_google(audio, language="en-in")
             print(f"User said: {query}\n")
             return query
-        except Exception:
-            return "An error occurred, Please try again"
+        except sr.UnknownValueError:
+            print("Could not understand audio.")
+            return ""
+        except sr.RequestError as e:
+            print(f"Speech Recognition service error: {e}")
+            return ""
+        except Exception as e:
+            print(f"Error listening: {e}")
+            return ""
 
 def greet_user():
     current_hour = datetime.datetime.now().hour
     if current_hour < 12:
-        speaker.speak("Good Morning!")
+        speak("Good Morning!")
     elif current_hour < 18:
-        speaker.speak("Good Afternoon!")
+        speak("Good Afternoon!")
     else:
-        speaker.speak("Good Evening!")
+        speak("Good Evening!")
 
-# Starts by greeting the user.
-greet_user()
-speaker.speak("How can I assist you?")
+def main():
+    greet_user()
+    speak("How can I assist you?")
 
-while True:
-    print("Listening...")
-    query = take_command()
-    
-    #Some websites are added including YouTube, Google, Github etc.
     sites = [
         ["youtube", "https://www.youtube.com/"],
         ["facebook", "https://www.facebook.com/"],
@@ -46,26 +59,50 @@ while True:
         ["zomato", "https://www.zomato.com/"],
         ["netflix", "https://www.netflix.com/"]
     ]
-    for site in sites:
-        if f"Open {site[0]}".lower() in query.lower():
-            speaker.speak(f"Opening {site[0]}..")
-            webbrowser.open(site[1])
 
-    # Opens Spotify
-    if "Open Spotify".lower() in query.lower():
-        speaker.speak("Opening Spotify...")
-        os.startfile("Spotify.exe")
+    while True:
+        query = take_command()
+        if not query:
+            continue
 
-    # Shows current time
-    if "the time".lower() in query.lower():
-        time = datetime.datetime.now().strftime("%H:%M:%S")
-        speaker.speak(f"The time is {time}")
+        query_lower = query.lower()
 
-    if "What is your name".lower() in query.lower():
-        speaker.speak("My name is Cosmo")
+        # Check websites
+        opened_site = False
+        for site, url in sites:
+            if f"open {site}" in query_lower:
+                speak(f"Opening {site}..")
+                webbrowser.open(url)
+                opened_site = True
+                break
+        if opened_site:
+            continue
 
-    # Stop running Cosmo by speaking "Stop running Cosmo"
-    if "Stop Running Cosmo".lower() in query.lower():
-        speaker.speak("Goodbyee!")
-        print("Stopped Cosmo")
-        exit()
+        # Opens Spotify via URI protocol or fallback
+        if "open spotify" in query_lower:
+            speak("Opening Spotify...")
+            try:
+                webbrowser.open("spotify:")
+            except Exception:
+                try:
+                    os.startfile("Spotify.exe")
+                except Exception as e:
+                    speak("Could not open Spotify automatically.")
+                    print(f"Error opening Spotify: {e}")
+
+        # Shows current time
+        elif "the time" in query_lower:
+            current_time = datetime.datetime.now().strftime("%H:%M:%S")
+            speak(f"The time is {current_time}")
+
+        elif "what is your name" in query_lower:
+            speak("My name is Cosmo")
+
+        # Stop running Cosmo
+        elif "stop running cosmo" in query_lower or "exit" in query_lower or "quit" in query_lower:
+            speak("Goodbye!")
+            print("Stopped Cosmo")
+            break
+
+if __name__ == "__main__":
+    main()

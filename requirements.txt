@@ -1,0 +1,5 @@
+speechrecognition
+pywin32
+pyttsx3
+flask
+flask-cors

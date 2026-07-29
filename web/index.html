@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COSMO // JARVIS SCI-FI HUD</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="hud-container">
+        <!-- Top Navbar -->
+        <header class="hud-header">
+            <div class="brand">
+                <span class="logo-icon">❖</span>
+                <span class="logo-text">COSMO <small>// AI HUD OS v2.0</small></span>
+            </div>
+
+            <div class="status-center">
+                <div class="status-indicator">
+                    <span class="dot pulse"></span>
+                    <span id="sys-status">CORE ONLINE</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <span id="live-clock">00:00:00</span>
+                <span class="protocol-badge">SECURE // ENCRYPTED</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <main class="hud-main">
+            <!-- Left Telemetry Panel -->
+            <aside class="panel left-panel">
+                <div class="panel-header">
+                    <h3>SYSTEM TELEMETRY</h3>
+                    <span class="corner-accent"></span>
+                </div>
+
+                <div class="metric-box">
+                    <div class="metric-label">
+                        <span>NEURAL ENGINE</span>
+                        <span id="cpu-val">98.4%</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="cpu-bar" style="width: 98.4%"></div></div>
+                </div>
+
+                <div class="metric-box">
+                    <div class="metric-label">
+                        <span>MEMORY ALLOCATION</span>
+                        <span id="ram-val">4.2 / 16 GB</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="ram-bar" style="width: 32%"></div></div>
+                </div>
+
+                <div class="metric-box">
+                    <div class="metric-label">
+                        <span>CORE TEMP</span>
+                        <span>38.5 °C</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 45%"></div></div>
+                </div>
+
+                <div class="sub-panel">
+                    <h4>QUICK PROTOCOLS</h4>
+                    <div class="protocol-list">
+                        <button class="hud-btn" onclick="sendQuickCommand('Open YouTube')">▶ YOUTUBE</button>
+                        <button class="hud-btn" onclick="sendQuickCommand('Open Spotify')">🎵 SPOTIFY</button>
+                        <button class="hud-btn" onclick="sendQuickCommand('Open GitHub')">🐙 GITHUB</button>
+                        <button class="hud-btn" onclick="sendQuickCommand('What is the time')">⏱ SYSTEM TIME</button>
+                        <button class="hud-btn" onclick="sendQuickCommand('What is your name')">🤖 IDENTITY</button>
+                    </div>
+                </div>
+
+                <div class="radar-box">
+                    <canvas id="radarCanvas" width="200" height="200"></canvas>
+                </div>
+            </aside>
+
+            <!-- Center Core Arc Reactor -->
+            <section class="center-core">
+                <div class="arc-reactor-wrapper">
+                    <canvas id="arcCanvas" width="450" height="450"></canvas>
+                    <div class="core-overlay">
+                        <div class="core-status" id="core-state">ONLINE</div>
+                        <div class="core-sub" id="core-subtext">AWAITING VOICE COMMAND</div>
+                    </div>
+                </div>
+
+                <!-- Waveform Canvas -->
+                <div class="audio-waveform-container">
+                    <canvas id="waveCanvas" width="500" height="60"></canvas>
+                </div>
+
+                <!-- Interaction Control -->
+                <div class="voice-trigger-container">
+                    <button class="mic-btn" id="micBtn" onclick="toggleVoiceRecognition()">
+                        <div class="mic-icon">🎙</div>
+                        <div class="mic-rings"></div>
+                    </button>
+                    <div class="mic-hint" id="micHint">CLICK MIC TO SPEAK</div>
+                </div>
+            </section>
+
+            <!-- Right Console Log Panel -->
+            <aside class="panel right-panel">
+                <div class="panel-header">
+                    <h3>COMMAND LOGS</h3>
+                    <span class="corner-accent"></span>
+                </div>
+
+                <div class="console-output" id="consoleLog">
+                    <div class="log-entry sys">[SYSTEM] Cosmo JARVIS v2.0 Initialization complete.</div>
+                    <div class="log-entry sys">[SYSTEM] Neural Speech Recognition module ready.</div>
+                </div>
+
+                <div class="panel-header" style="margin-top: 15px;">
+                    <h3>VOICE FEEDBACK</h3>
+                </div>
+                <div class="speech-box" id="speechBox">
+                    "Greetings, Agent. JARVIS HUD online and systems fully operational."
+                </div>
+            </aside>
+        </main>
+
+        <!-- Bottom Input Terminal Bar -->
+        <footer class="hud-footer">
+            <div class="input-wrapper">
+                <span class="prompt-symbol">&gt;</span>
+                <input type="text" id="cmdInput" placeholder="Enter text command or click microphone..." onkeydown="handleKeyDown(event)">
+                <button class="send-btn" onclick="submitTextInput()">EXECUTE</button>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
