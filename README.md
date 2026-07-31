@@ -25,15 +25,6 @@
 
 ---
 
-## 🖼️ Preview
-
-*(Optional: Place a screenshot or GIF of your new UI below!)*
-
-```
-![COSMO UI Screenshot](assets/preview.png)
-```
-
----
 
 ## 📋 Prerequisites
 
