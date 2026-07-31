@@ -4,6 +4,13 @@ import webbrowser
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
+# Import speech command handling from main
+try:
+    from main import take_command
+except ImportError:
+    def take_command():
+        return ""
+
 # Optional dotenv loading if module is available
 try:
     from dotenv import load_dotenv
@@ -38,9 +45,8 @@ SITES = [
 
 def call_gemini(prompt: str) -> str:
     if not gemini_client:
-        return "Greetings, Commander! Please configure your GEMINI_API_KEY in your .env file to enable smart AI responses."
+        return "Greetings! Configure your API_KEY in your .env file to enable AI responses."
     
-    # List available models directly using client.models.list() if possible, or try supported model names
     models_to_try = [
         'gemini-2.5-flash',
         'gemini-1.5-flash-latest',
@@ -49,11 +55,9 @@ def call_gemini(prompt: str) -> str:
         'gemini-1.5-pro'
     ]
 
-    # Attempt fetching dynamic model list first
     try:
         listed = [m.name for m in gemini_client.models.list()]
         if listed:
-            # Clean model names if prefixed with models/
             clean_models = [m.replace('models/', '') for m in listed if 'gemini' in m.lower()]
             if clean_models:
                 models_to_try = clean_models + models_to_try
@@ -65,7 +69,7 @@ def call_gemini(prompt: str) -> str:
         try:
             response = gemini_client.models.generate_content(
                 model=model_name,
-                contents=f"You are Cosmo, an advanced futuristic AI Droid companion. Respond intelligently, helpfully, and with sleek AI personality (max 2-3 sentences). User query: {prompt}"
+                contents=f"You are Cosmo, a helpful desktop voice assistant. Respond concisely and naturally (max 2 sentences). User query: {prompt}"
             )
             if response and response.text:
                 return response.text.strip()
@@ -73,11 +77,11 @@ def call_gemini(prompt: str) -> str:
             last_err = str(e)
             continue
             
-    return f"Cosmo AI System Note: Gemini API call error: {last_err}. Please ensure your API key has access to Gemini models."
+    return f"Cosmo AI Note: Gemini API error: {last_err}."
 
 def process_command(query: str):
     if not query:
-        return {"action": "none", "speech": "Cosmo AI standing by. I did not receive a command."}
+        return {"action": "none", "speech": "I did not receive a command."}
 
     query_lower = query.lower()
 
@@ -85,7 +89,7 @@ def process_command(query: str):
     for site, url in SITES:
         if f"open {site}" in query_lower:
             webbrowser.open(url)
-            return {"action": "open_url", "url": url, "speech": f"Executing protocol: Opening {site}."}
+            return {"action": "open_url", "url": url, "speech": f"Opening {site}."}
 
     # Spotify
     if "open spotify" in query_lower:
@@ -97,20 +101,20 @@ def process_command(query: str):
                 os.startfile("Spotify.exe")
                 return {"action": "open_app", "app": "Spotify", "speech": "Opening Spotify application."}
             except Exception as e:
-                return {"action": "error", "speech": f"System error launching Spotify: {str(e)}"}
+                return {"action": "error", "speech": f"Error launching Spotify: {str(e)}"}
 
     # Time
     if "the time" in query_lower or "current time" in query_lower:
         current_time = datetime.datetime.now().strftime("%I:%M %p")
-        return {"action": "tell_time", "speech": f"Cosmo Chronometer: The current time is {current_time}."}
+        return {"action": "tell_time", "speech": f"The current time is {current_time}."}
 
     # Name / Identity
     if "what is your name" in query_lower or "who are you" in query_lower:
-        return {"action": "identity", "speech": "I am Cosmo, your futuristic AI Droid companion."}
+        return {"action": "identity", "speech": "I am Cosmo, your desktop voice assistant."}
 
     # Greetings
     if any(k in query_lower for k in ["hello", "hi", "hey", "cosmo", "status"]):
-        return {"action": "greet", "speech": "Greetings, Commander! Cosmo AI systems online and operational."}
+        return {"action": "greet", "speech": "Hello! Cosmo systems online and ready."}
 
     # Default: Query Gemini API
     ai_response = call_gemini(query)
@@ -131,15 +135,24 @@ def api_command():
     res = process_command(query)
     return jsonify(res)
 
+@app.route("/api/listen", methods=["POST", "GET"])
+def api_listen():
+    query = take_command()
+    if not query:
+        return jsonify({"query": "", "speech": "No speech detected.", "action": "none"})
+    res = process_command(query)
+    res["query"] = query
+    return jsonify(res)
+
 @app.route("/api/status", methods=["GET"])
 def api_status():
     return jsonify({
         "status": "ONLINE",
-        "system": "COSMO FUTURISTIC DROID v5.0",
+        "system": "Cosmo Desktop Assistant v5.1",
         "gemini_active": gemini_client is not None,
         "timestamp": datetime.datetime.now().isoformat()
     })
 
 if __name__ == "__main__":
-    print("Starting COSMO AI Droid Server on http://localhost:5000")
+    print("Starting Cosmo Desktop Assistant Server on http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=True)

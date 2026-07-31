@@ -3,123 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COSMO // FUTURISTIC AI DROID INTERFACE</title>
+    <title>Cosmo — Desktop Assistant</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- Three.js 3D Engine -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-    <!-- Fullscreen 3D WebGL Viewport -->
-    <div id="canvas-container"></div>
-    
-    <div class="scanlines"></div>
-    <div class="vignette"></div>
-
-    <div class="hud-container">
-        <!-- Top Futuristic Header -->
-        <header class="hud-header">
+    <div class="app-container">
+        <!-- Minimal Top Header -->
+        <header class="app-header">
             <div class="brand">
-                <span class="logo-icon">🤖</span>
-                <span class="logo-text">COSMO <small>// FUTURISTIC AI DROID COMPANION</small></span>
-            </div>
-
-            <div class="status-center">
-                <div class="status-indicator">
-                    <span class="dot pulse"></span>
-                    <span id="sys-status">COSMO DROID // NEURAL AI ACTIVE</span>
+                <div class="brand-avatar">C</div>
+                <div class="brand-info">
+                    <span class="brand-name">Cosmo</span>
+                    <span class="brand-status" id="sys-status">Ready</span>
                 </div>
             </div>
-
             <div class="header-right">
-                <span id="live-clock">00:00:00</span>
-                <span class="protocol-badge">NEURAL LINK // ONLINE</span>
+                <span class="live-clock" id="live-clock">12:00 PM</span>
             </div>
         </header>
 
-        <!-- Main HUD Layout -->
-        <main class="hud-main">
-            <!-- Left Telemetry Panel -->
-            <aside class="panel left-panel">
-                <div class="panel-header">
-                    <h3>COSMO TELEMETRY</h3>
-                    <span class="corner-accent"></span>
-                </div>
-
-                <div class="metric-box">
-                    <div class="metric-label">
-                        <span>NEURAL CORE SYNC</span>
-                        <span id="cpu-val">98.4%</span>
+        <!-- Main Content Area -->
+        <main class="app-main">
+            <!-- Voice Orb Hero Section -->
+            <section class="voice-hero">
+                <div class="orb-wrapper" id="orbWrapper" onclick="toggleVoiceRecognition()">
+                    <div class="voice-orb" id="voiceOrb">
+                        <div class="orb-core"></div>
+                        <div class="orb-ring ring-1"></div>
+                        <div class="orb-ring ring-2"></div>
                     </div>
-                    <div class="progress-bar"><div class="progress-fill" id="cpu-bar" style="width: 98.4%"></div></div>
-                </div>
-
-                <div class="metric-box">
-                    <div class="metric-label">
-                        <span>MEMORY MATRIX</span>
-                        <span id="ram-val">4.2 / 16 GB</span>
-                    </div>
-                    <div class="progress-bar"><div class="progress-fill" id="ram-bar" style="width: 32%"></div></div>
-                </div>
-
-                <div class="metric-box">
-                    <div class="metric-label">
-                        <span>QUANTUM FLUX</span>
-                        <span>99.8%</span>
-                    </div>
-                    <div class="progress-bar"><div class="progress-fill" style="width: 99.8%"></div></div>
-                </div>
-
-                <div class="sub-panel">
-                    <h4>QUICK PROTOCOLS</h4>
-                    <div class="protocol-list">
-                        <button class="hud-btn" onclick="sendQuickCommand('Open YouTube')">▶ YOUTUBE PROTOCOL</button>
-                        <button class="hud-btn" onclick="sendQuickCommand('Open Spotify')">🎵 SPOTIFY FREQ</button>
-                        <button class="hud-btn" onclick="sendQuickCommand('Open GitHub')">🐙 GITHUB REPO</button>
-                        <button class="hud-btn" onclick="sendQuickCommand('Tell me a futuristic joke')">✨ GEMINI AI JOKE</button>
-                        <button class="hud-btn" onclick="sendQuickCommand('What is your name')">🤖 COSMO DROID ID</button>
+                    <div class="orb-mic-icon" id="micIcon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="22"></line>
+                        </svg>
                     </div>
                 </div>
-            </aside>
-
-            <!-- Center Stage Overlay -->
-            <section class="center-core">
-                <div class="core-overlay">
-                    <div class="core-status" id="core-state">COSMO AI DROID</div>
-                    <div class="core-sub" id="core-subtext">3D FUTURISTIC CYBORG DROID</div>
-                </div>
-
-                <div class="voice-trigger-container">
-                    <button class="mic-btn" id="micBtn" onclick="toggleVoiceRecognition()">
-                        <div class="mic-icon">🎙</div>
-                    </button>
-                    <div class="mic-hint" id="micHint">COMMUNICATE WITH COSMO</div>
-                </div>
+                <p class="voice-hint" id="voiceHint">Click or speak to Cosmo</p>
             </section>
 
-            <!-- Right Console Log Panel -->
-            <aside class="panel right-panel">
-                <div class="panel-header">
-                    <h3>SYSTEM COMMS LOG</h3>
-                    <span class="corner-accent"></span>
-                </div>
+            <!-- Quick Action Shortcut Pills -->
+            <div class="quick-pills">
+                <button class="pill" onclick="sendQuickCommand('What is your name')">
+                    <span class="pill-icon">✨</span> Who are you?
+                </button>
+                <button class="pill" onclick="sendQuickCommand('What is the time')">
+                    <span class="pill-icon">🕒</span> Time
+                </button>
+                <button class="pill" onclick="sendQuickCommand('Open YouTube')">
+                    <span class="pill-icon">▶</span> YouTube
+                </button>
+                <!-- <button class="pill" onclick="sendQuickCommand('Open Spotify')">
+                    <span class="pill-icon">🎵</span> Spotify
+                </button> -->
+                <button class="pill" onclick="sendQuickCommand('Open GitHub')">
+                    <span class="pill-icon">🐙</span> GitHub
+                </button>
+                
+            </div>
 
-                <div class="console-output" id="consoleLog">
-                    <div class="log-entry sys">[SYSTEM] Cosmo 3D Droid Engine initialized.</div>
-                    <div class="log-entry sys">[SYSTEM] Neural Speech & Gestures online.</div>
+            <!-- Conversation Feed -->
+            <section class="chat-section">
+                <div class="chat-feed" id="chatFeed">
+                    <div class="message assistant">
+                        <div class="msg-bubble">
+                            Hello! I am Cosmo, your desktop voice assistant. How can I help you today?
+                        </div>
+                    </div>
                 </div>
-            </aside>
+            </section>
         </main>
 
-        <!-- Bottom Input Terminal Bar -->
-        <footer class="hud-footer">
-            <div class="input-wrapper">
-                <span class="prompt-symbol">COSMO&gt;</span>
-                <input type="text" id="cmdInput" placeholder="Speak or type command to Cosmo..." onkeydown="handleKeyDown(event)">
-                <button class="send-btn" onclick="submitTextInput()">TRANSMIT</button>
+        <!-- Bottom Command Bar -->
+        <footer class="app-footer">
+            <div class="input-bar">
+                <input type="text" id="cmdInput" placeholder="Ask Cosmo anything..." onkeydown="handleKeyDown(event)">
+                <button class="mic-toggle-btn" id="micBtn" onclick="toggleVoiceRecognition()" title="Toggle Voice">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                </button>
+                <button class="send-btn" onclick="submitTextInput()" title="Send Command">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
             </div>
         </footer>
     </div>
