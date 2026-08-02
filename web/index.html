@@ -23,6 +23,7 @@
             </div>
             <div class="header-right">
                 <span class="live-clock" id="live-clock">12:00 PM</span>
+                <button class="settings-btn" onclick="toggleSettingsModal()" title="Settings">⚙️</button>
             </div>
         </header>
 
@@ -64,7 +65,9 @@
                 <button class="pill" onclick="sendQuickCommand('Open GitHub')">
                     <span class="pill-icon">🐙</span> GitHub
                 </button>
-                
+                <button class="pill" onclick="sendVisionCommand()">
+                    <span class="pill-icon">👁️</span> Look at Screen
+                </button>
             </div>
 
             <!-- Conversation Feed -->
@@ -98,6 +101,21 @@
                 </button>
             </div>
         </footer>
+        
+        <!-- Settings Modal -->
+        <div class="modal-overlay" id="settingsModal">
+            <div class="modal-content">
+                <h2>Settings</h2>
+                <div class="settings-group">
+                    <label for="apiKeyInput">Gemini API Key</label>
+                    <input type="password" id="apiKeyInput" placeholder="Enter your API Key here...">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn secondary" onclick="toggleSettingsModal()">Cancel</button>
+                    <button class="btn primary" onclick="saveSettings()">Save</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>

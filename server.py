@@ -20,14 +20,39 @@ except ImportError:
 
 # Setup Gemini AI Client if API key present
 gemini_client = None
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if GEMINI_API_KEY:
+chat_session = None
+
+def get_best_model(client):
+    models_to_try = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-pro']
+    try:
+        listed = [m.name.replace('models/', '') for m in client.models.list()]
+        for m in models_to_try:
+            if m in listed:
+                return m
+        if listed:
+            return [m for m in listed if 'gemini' in m.lower()][0]
+    except Exception:
+        pass
+    return 'gemini-1.5-flash'
+
+def init_gemini(api_key):
+    global gemini_client, chat_session
     try:
         from google import genai
-        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
-        print("[COSMO] Gemini AI Client initialized successfully!")
+        gemini_client = genai.Client(api_key=api_key)
+        model_name = get_best_model(gemini_client)
+        chat_session = gemini_client.chats.create(model=model_name)
+        print(f"[COSMO] Gemini AI Client initialized with model {model_name}!")
+        return True
     except Exception as e:
         print(f"[COSMO WARNING] Could not initialize Gemini Client: {e}")
+        gemini_client = None
+        chat_session = None
+        return False
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    init_gemini(GEMINI_API_KEY)
 
 app = Flask(__name__, static_folder="web", static_url_path="")
 CORS(app)
@@ -43,41 +68,23 @@ SITES = [
     ["netflix", "https://www.netflix.com/"]
 ]
 
-def call_gemini(prompt: str) -> str:
-    if not gemini_client:
-        return "Greetings! Configure your API_KEY in your .env file to enable AI responses."
+def call_gemini(prompt: str, image=None) -> str:
+    if not chat_session:
+        return "Greetings! Configure your API_KEY in settings to enable AI responses."
     
-    models_to_try = [
-        'gemini-2.5-flash',
-        'gemini-1.5-flash-latest',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro-latest',
-        'gemini-1.5-pro'
-    ]
-
+    sys_prompt = f"You are Cosmo, a helpful desktop voice assistant. Respond concisely and naturally (max 2 sentences). User query: {prompt}"
+    
     try:
-        listed = [m.name for m in gemini_client.models.list()]
-        if listed:
-            clean_models = [m.replace('models/', '') for m in listed if 'gemini' in m.lower()]
-            if clean_models:
-                models_to_try = clean_models + models_to_try
-    except Exception:
-        pass
-    
-    last_err = ""
-    for model_name in models_to_try:
-        try:
-            response = gemini_client.models.generate_content(
-                model=model_name,
-                contents=f"You are Cosmo, a helpful desktop voice assistant. Respond concisely and naturally (max 2 sentences). User query: {prompt}"
-            )
-            if response and response.text:
-                return response.text.strip()
-        except Exception as e:
-            last_err = str(e)
-            continue
-            
-    return f"Cosmo AI Note: Gemini API error: {last_err}."
+        if image:
+            response = chat_session.send_message([sys_prompt, image])
+        else:
+            response = chat_session.send_message(sys_prompt)
+        if response and response.text:
+            return response.text.strip()
+    except Exception as e:
+        return f"Cosmo AI Note: Gemini API error: {str(e)}"
+        
+    return "Cosmo AI Note: No response."
 
 def process_command(query: str):
     if not query:
@@ -102,6 +109,41 @@ def process_command(query: str):
                 return {"action": "open_app", "app": "Spotify", "speech": "Opening Spotify application."}
             except Exception as e:
                 return {"action": "error", "speech": f"Error launching Spotify: {str(e)}"}
+
+    # Volume Control
+    if "volume up" in query_lower:
+        try:
+            import platform, subprocess
+            if platform.system() == "Linux":
+                subprocess.run(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%+"], check=False)
+            else:
+                import pyautogui
+                pyautogui.press('volumeup', presses=5)
+            return {"action": "volume_up", "speech": "Increasing volume."}
+        except Exception as e:
+            return {"action": "error", "speech": "Volume up failed."}
+    if "volume down" in query_lower:
+        try:
+            import platform, subprocess
+            if platform.system() == "Linux":
+                subprocess.run(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%-"], check=False)
+            else:
+                import pyautogui
+                pyautogui.press('volumedown', presses=5)
+            return {"action": "volume_down", "speech": "Decreasing volume."}
+        except Exception as e:
+            return {"action": "error", "speech": "Volume down failed."}
+    if "mute" in query_lower:
+        try:
+            import platform, subprocess
+            if platform.system() == "Linux":
+                subprocess.run(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"], check=False)
+            else:
+                import pyautogui
+                pyautogui.press('volumemute')
+            return {"action": "volume_mute", "speech": "Toggling audio mute."}
+        except Exception as e:
+            return {"action": "error", "speech": "Muting failed."}
 
     # Time
     if "the time" in query_lower or "current time" in query_lower:
@@ -148,10 +190,60 @@ def api_listen():
 def api_status():
     return jsonify({
         "status": "ONLINE",
-        "system": "Cosmo Desktop Assistant v5.1",
-        "gemini_active": gemini_client is not None,
+        "system": "Cosmo Desktop Assistant v6.0",
+        "gemini_active": chat_session is not None,
         "timestamp": datetime.datetime.now().isoformat()
     })
+
+@app.route("/api/settings", methods=["POST"])
+def api_settings():
+    data = request.get_json(force=True, silent=True) or {}
+    api_key = data.get("api_key", "").strip()
+    if api_key:
+        try:
+            with open(".env", "w") as f:
+                f.write(f"GEMINI_API_KEY={api_key}\n")
+            os.environ["GEMINI_API_KEY"] = api_key
+            success = init_gemini(api_key)
+            if success:
+                return jsonify({"status": "success", "message": "API Key saved and Gemini initialized."})
+            else:
+                return jsonify({"status": "error", "message": "Invalid API Key or initialization failed."})
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)})
+    return jsonify({"status": "error", "message": "No API Key provided."})
+
+@app.route("/api/vision", methods=["POST"])
+def api_vision():
+    if not chat_session:
+        return jsonify({"action": "error", "speech": "Please configure your Gemini API Key in Settings first."})
+        
+    data = request.get_json(force=True, silent=True) or {}
+    query = data.get("query", "What is on my screen? Summarize briefly.")
+    
+    img_path = os.path.abspath("temp_screen.png")
+    try:
+        import platform, subprocess
+        if platform.system() == "Linux":
+            # Some environments restrict gnome-screenshot. Using check=False to gracefully fail.
+            res = subprocess.run(["gnome-screenshot", "-f", img_path], check=False)
+            if res.returncode != 0 or not os.path.exists(img_path):
+                 return jsonify({"action": "error", "speech": "Vision error: gnome-screenshot failed or is restricted by Wayland."})
+        else:
+            import pyautogui
+            screenshot = pyautogui.screenshot()
+            screenshot.save(img_path)
+            
+        import PIL.Image
+        img = PIL.Image.open(img_path)
+        ai_response = call_gemini(query, image=img)
+        
+        if os.path.exists(img_path):
+            os.remove(img_path)
+            
+        return jsonify({"action": "vision", "speech": ai_response})
+    except Exception as e:
+        return jsonify({"action": "error", "speech": f"Vision error: {str(e)}"})
 
 if __name__ == "__main__":
     print("Starting Cosmo Desktop Assistant Server on http://localhost:5000")
