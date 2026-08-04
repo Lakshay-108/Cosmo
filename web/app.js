@@ -2,11 +2,35 @@
 let recognition = null;
 let isListening = false;
 let isBackendListening = false;
+let selectedVoiceURI = localStorage.getItem('cosmoVoiceURI') || '';
 
 document.addEventListener('DOMContentLoaded', () => {
     initClock();
     initSpeechRecognition();
+    
+    if ('speechSynthesis' in window) {
+        populateVoiceList();
+        window.speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
 });
+
+function populateVoiceList() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    const voiceSelect = document.getElementById('voiceSelect');
+    if (!voiceSelect) return;
+    
+    voiceSelect.innerHTML = '';
+    voices.forEach((voice) => {
+        const option = document.createElement('option');
+        option.textContent = `${voice.name} (${voice.lang})`;
+        option.value = voice.voiceURI;
+        if (voice.voiceURI === selectedVoiceURI) {
+            option.selected = true;
+        }
+        voiceSelect.appendChild(option);
+    });
+}
 
 // Live clock
 function initClock() {
@@ -228,6 +252,13 @@ function speakBrowser(text) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
+        
+        const voices = window.speechSynthesis.getVoices();
+        const selectedVoice = voices.find(v => v.voiceURI === selectedVoiceURI);
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+        }
+        
         window.speechSynthesis.speak(utterance);
     }
 }
@@ -244,44 +275,34 @@ function toggleSettingsModal() {
 
 async function saveSettings() {
     const apiKey = document.getElementById('apiKeyInput').value.trim();
-    if (!apiKey) return;
+    
+    const voiceSelect = document.getElementById('voiceSelect');
+    if (voiceSelect && voiceSelect.value) {
+        selectedVoiceURI = voiceSelect.value;
+        localStorage.setItem('cosmoVoiceURI', selectedVoiceURI);
+    }
     
     setAssistantState('Saving Settings...', 'thinking');
     toggleSettingsModal();
     
-    try {
-        const response = await fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ api_key: apiKey })
-        });
-        const data = await response.json();
-        addChatMessage(data.message, 'assistant');
-        speakBrowser(data.message);
-    } catch (err) {
-        addChatMessage('Error saving settings.', 'assistant');
-    } finally {
-        setAssistantState('Ready', 'ready');
-    }
-}
-
-// Vision Command
-async function sendVisionCommand() {
-    addChatMessage('Look at my screen', 'user');
-    setAssistantState('Analyzing Screen...', 'thinking');
-    try {
-        const response = await fetch('/api/vision', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: 'What is on my screen? Summarize briefly.' })
-        });
-        const data = await response.json();
-
-        addChatMessage(data.speech, 'assistant');
-        speakBrowser(data.speech);
-    } catch (err) {
-        addChatMessage('Error connecting to Cosmo vision API.', 'assistant');
-    } finally {
+    if (apiKey) {
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_key: apiKey })
+            });
+            const data = await response.json();
+            addChatMessage(data.message, 'assistant');
+            speakBrowser(data.message);
+        } catch (err) {
+            addChatMessage('Error saving settings.', 'assistant');
+        } finally {
+            setAssistantState('Ready', 'ready');
+        }
+    } else {
+        addChatMessage('Settings saved!', 'assistant');
+        speakBrowser('Settings saved!');
         setAssistantState('Ready', 'ready');
     }
 }

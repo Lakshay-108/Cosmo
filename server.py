@@ -213,37 +213,7 @@ def api_settings():
             return jsonify({"status": "error", "message": str(e)})
     return jsonify({"status": "error", "message": "No API Key provided."})
 
-@app.route("/api/vision", methods=["POST"])
-def api_vision():
-    if not chat_session:
-        return jsonify({"action": "error", "speech": "Please configure your Gemini API Key in Settings first."})
-        
-    data = request.get_json(force=True, silent=True) or {}
-    query = data.get("query", "What is on my screen? Summarize briefly.")
-    
-    img_path = os.path.abspath("temp_screen.png")
-    try:
-        import platform, subprocess
-        if platform.system() == "Linux":
-            # Some environments restrict gnome-screenshot. Using check=False to gracefully fail.
-            res = subprocess.run(["gnome-screenshot", "-f", img_path], check=False)
-            if res.returncode != 0 or not os.path.exists(img_path):
-                 return jsonify({"action": "error", "speech": "Vision error: gnome-screenshot failed or is restricted by Wayland."})
-        else:
-            import pyautogui
-            screenshot = pyautogui.screenshot()
-            screenshot.save(img_path)
-            
-        import PIL.Image
-        img = PIL.Image.open(img_path)
-        ai_response = call_gemini(query, image=img)
-        
-        if os.path.exists(img_path):
-            os.remove(img_path)
-            
-        return jsonify({"action": "vision", "speech": ai_response})
-    except Exception as e:
-        return jsonify({"action": "error", "speech": f"Vision error: {str(e)}"})
+
 
 if __name__ == "__main__":
     print("Starting Cosmo Desktop Assistant Server on http://localhost:5000")
